@@ -16,6 +16,12 @@ crate-type = ["cdylib", "lib"]
 [dependencies]
 nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", features = ["assert_process_allocs", "standalone"] }
 nih_plug_egui = { git = "https://github.com/robbert-vdh/nih-plug.git" }
+# The shared Stoatworks About window (src/about_window.rs, vendored by the
+# fleet's sync-about) names `egui` and `image` directly, so both are direct
+# dependencies: `egui` at the version nih_plug_egui already resolves, `image`
+# only to decode the mark.
+egui = "0.31"
+image = { version = "0.25", default-features = false, features = ["png"] }
 atomic_float = "1"
 
 [profile.release]

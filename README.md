@@ -1,7 +1,24 @@
 # VoiceLevel
 
-An attenuation-only automatic microphone leveler for live sound. VST3, CLAP and a standalone
-app, built on [nih-plug](https://github.com/robbert-vdh/nih-plug).
+> **AI-assisted project.** This codebase was created with [Claude](https://claude.com/claude-code)
+> (Anthropic), directed and reviewed by a human author. The leveler is pinned by unit tests
+> (it never boosts, sample for sample; it pulls a hot signal to target at the configured
+> dB/s; it holds through silence; Learn measures speech with the pauses left out), the VST3
+> passes `pluginval` at strictness 10 with a reported latency of 0, and it has been run live
+> on synthesised speech through the standalone build. It has **not** yet been used on a real
+> microphone at a real event. Check it in your own rig first.
+
+An attenuation-only automatic microphone leveler for live sound. VST3, CLAP and a
+standalone app, built on [nih-plug](https://github.com/robbert-vdh/nih-plug).
+
+![The VoiceLevel window: input and output meters on the left with the target drawn across them, the virtual fader in the middle pulled down to −6.4 dB, and the six controls on the right with the mode buttons above them](docs/screenshots/plugin.png)
+
+*Real screenshot of the standalone build, levelling synthesised speech: the talker measures
+−14.6 dBFS against a −20 dBFS target, so the fader has come down 6.4 dB. The yellow tick on
+the input meter is the talker's level with the pauses left out — what the fader is steered by.*
+
+<!-- downloads:start -->
+<!-- downloads:end -->
 
 Think of it as a virtual fader with an operator's hand on it:
 
@@ -16,6 +33,8 @@ Think of it as a virtual fader with an operator's hand on it:
   freezes: a pause is not a reason to bring a hot mic back up.
 - **Learn** listens to the talker for five seconds of speech and parks the fader at the
   attenuation that puts them on target, for the rest of the show.
+
+**User guide:** [docs/USER-GUIDE.md](docs/USER-GUIDE.md).
 
 ## Controls
 
@@ -74,7 +93,7 @@ The standalone runs the plugin on a live device, which is the quickest way to tr
 mic:
 
 ```bash
-./target/bundled/VoiceLevel.app/Contents/MacOS/VoiceLevel --backend core-audio -l 2 \
+./target/bundled/VoiceLevel.app/Contents/MacOS/VoiceLevel --backend core-audio -l 1 \
   --input-device "MacBook Pro Microphone" --output-device "MacBook Pro Speakers"
 ```
 
@@ -97,7 +116,36 @@ latency 0) and `clap-validator` (CLAP: 30 of 34 tests pass; the four failures �
 `state-invalid-random` and the three `state-reproducibility-*` rescan checks — are in nih-plug's
 CLAP state-load wrapper and reproduce identically on nih-plug's own `gain` example).
 
+## Windows SmartScreen
+
+The released plugins are **Developer ID-signed and notarised** on macOS, so your host loads
+them with no quarantine step and no failed validation. The Windows binaries are **not**
+code-signed.
+
+- **macOS** — nothing to do. Install and rescan.
+- **Windows** — plugin files aren't gated the way `.exe` files are, so your host loads them
+  normally. The **installer** trips SmartScreen: **More info** → **Run anyway**.
+- **Linux** — no signing gate.
+
+Per-artifact steps and checksum verification: **[docs/UNSIGNED.md](docs/UNSIGNED.md)**.
+
+## Status
+
+First release. The leveler core is covered by 15 unit tests; the VST3 passes `pluginval` at
+strictness 10 (editor open while processing, state restore, automation, parameter fuzzing,
+reported latency 0); the standalone has been run live on synthesised speech through a
+loopback device, where the meters, the pull-down and the hold through silence were all
+watched happening.
+
+- [ ] Not yet used on a real microphone in a live signal chain.
+- [ ] Met few hosts: validated by pluginval and the standalone only.
+- The CLAP build passes `clap-validator` except four state-load checks that fail identically
+  on nih-plug's own example plugin — an upstream framework issue, not this plugin's.
+
+<!-- attributions:start -->
+<!-- attributions:end -->
+
 ## Licence
 
 GPL-3.0-or-later. nih-plug itself is ISC, but its VST3 bindings are GPLv3, so a VST3 build has
-to be too.
+to be too. See [LICENSE](LICENSE).

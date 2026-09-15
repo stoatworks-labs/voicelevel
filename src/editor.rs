@@ -39,6 +39,7 @@ pub struct EditorState {
     /// When this editor started the current Learn; `None` when Learn was started elsewhere (a
     /// host automation lane, another editor instance), in which case we never stop it ourselves.
     learn_started: Option<Instant>,
+    show_about: bool,
 }
 
 pub fn create(params: Arc<VoiceLevelParams>, meters: Arc<Meters>) -> Option<Box<dyn Editor>> {
@@ -53,6 +54,7 @@ pub fn create(params: Arc<VoiceLevelParams>, meters: Arc<Meters>) -> Option<Box<
             egui::CentralPanel::default().show(ctx, |ui| {
                 draw(ui, setter, state, &params, &meters);
             });
+            crate::about_window::show(ctx, &mut state.show_about);
         },
     )
 }
@@ -80,6 +82,14 @@ fn draw(
         ui.heading("VoiceLevel");
         ui.label(egui::RichText::new("attenuation-only mic leveler").weak());
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            if ui
+                .small_button("About")
+                .on_hover_text("Version, user guide, source and how to support the work")
+                .clicked()
+            {
+                state.show_about = true;
+            }
+            ui.separator();
             let learning = mode == ModeParam::Learn;
             let learn_text = if learning {
                 format!("Learning…  {learn_seconds:.1} s")

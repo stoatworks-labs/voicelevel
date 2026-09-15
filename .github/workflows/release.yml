@@ -1,0 +1,260 @@
+name: release
+
+# Build VoiceLevel (VST3 + CLAP + Standalone) for Windows, macOS and Linux
+# (x64 + arm64). Plugins ship as zips (drop the bundle into your plugin
+# folder); macOS also gets a .dmg and a multi-part .pkg, Windows an NSIS
+# installer, and the Linux jobs emit best-effort .deb/.rpm that install the
+# VST3 and CLAP. Trigger manually (Actions > release > Run workflow) or by
+# pushing a v* tag.
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    # Windows on Arm is the one platform nih-plug's own CI never exercises, so
+    # it may not build; a failure there must not hold the release for the four
+    # platforms that do.
+    continue-on-error: ${{ matrix.experimental || false }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-x86_64,    os: ubuntu-latest,    pkgarch: amd64 }
+          - { name: linux-aarch64,   os: ubuntu-24.04-arm, pkgarch: arm64 }
+          - { name: windows-x86_64,  os: windows-latest }
+          - { name: windows-aarch64, os: windows-11-arm,   experimental: true }
+          # One universal macOS build rather than two single-arch ones. A host
+          # loads whichever slice matches its own process, so a universal
+          # bundle is the only shape that works in both Intel and Apple
+          # Silicon DAWs without the user having to pick.
+          - { name: macos-universal, os: macos-14 }
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Linux audio/GUI dev deps
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libasound2-dev libgl-dev libjack-jackd2-dev libx11-xcb-dev libxcb1-dev \
+            libxcb-dri2-0-dev libxcb-icccm4-dev libxcursor-dev libxkbcommon-dev \
+            libxcb-shape0-dev libxcb-xfixes0-dev
+
+      - name: Install the Rust toolchain
+        shell: bash
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
+          if [ "${{ runner.os }}" = macOS ]; then
+            # `universal-apple-darwin` is a bundling target, not a rustup one:
+            # both real triples are built and lipo'd by the xtask.
+            rustup target add aarch64-apple-darwin x86_64-apple-darwin
+          fi
+
+      - name: Test
+        run: cargo test --release
+
+      - name: Build and bundle
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = macOS ]; then
+            cargo xtask bundle-universal voicelevel --release
+          else
+            cargo xtask bundle voicelevel --release
+          fi
+          ls -R target/bundled | head -40
+
+      - name: Derive version
+        id: ver
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=0.1.0-dev.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Collect plugin bundles
+        shell: bash
+        # The same layout the fleet's other audio plugins ship — one folder per
+        # format — so Burrow and a human find the VST3 in the same place.
+        run: |
+          mkdir -p out/VST3 out/CLAP out/Standalone
+          b="target/bundled"
+          cp -R "$b/VoiceLevel.vst3" out/VST3/
+          cp -R "$b/VoiceLevel.clap" out/CLAP/
+          case "${{ runner.os }}" in
+            macOS)   cp -R "$b/VoiceLevel.app" out/Standalone/ ;;
+            Windows) cp "$b/VoiceLevel.exe" out/Standalone/ ;;
+            *)       cp "$b/VoiceLevel" out/Standalone/ ;;
+          esac
+          cp README.md LICENSE out/
+          ls -R out | head -40
+
+      - name: Archive (zip)
+        shell: bash
+        run: |
+          cd out
+          if command -v 7z >/dev/null 2>&1; then
+            7z a "../voicelevel-${{ matrix.name }}.zip" ./*
+          else
+            zip -r "../voicelevel-${{ matrix.name }}.zip" ./*
+          fi
+
+      - name: Installers (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        # A plugin does not install to one place, so the .pkg is multi-part:
+        # VST3 to /Library/Audio/Plug-Ins/VST3, CLAP to .../CLAP and the
+        # standalone to /Applications. The .dmg carries all three for anyone
+        # who would rather drag them.
+        #
+        # Ad-hoc signing is required, not cosmetic: an unsigned bundle is
+        # rejected by the host's plugin scan on Apple Silicon. The Developer ID
+        # signature and notarisation are applied after publication by the
+        # fleet's signing agent, which never runs on CI.
+        run: |
+          source scripts/release-lib.sh
+          version="${{ steps.ver.outputs.version }}"
+          rl_init "VoiceLevel" voicelevel "$version" com.stoatworks.voicelevel "$GITHUB_WORKSPACE"
+
+          vst3="out/VST3/VoiceLevel.vst3"
+          clap="out/CLAP/VoiceLevel.clap"
+          app="out/Standalone/VoiceLevel.app"
+
+          # Assert the universal slice on EVERY Mach-O rather than trusting the
+          # build log — a thin binary inside a bundle compiles and reports
+          # success just the same, and a find that matched nothing would pass
+          # in silence, hence the count.
+          n=0
+          while IFS= read -r bin; do
+            archs="$(lipo -archs "$bin")"
+            echo "$bin: $archs"
+            case "$archs" in *arm64*x86_64*|*x86_64*arm64*) ;; *)
+              echo "expected universal, got: $archs" >&2; exit 1 ;;
+            esac
+            n=$((n+1))
+          done < <(find out -type f -perm -u+x -path '*/Contents/MacOS/*')
+          [ "$n" -ge 3 ] || { echo "expected 3 Mach-O binaries, found $n" >&2; exit 1; }
+
+          for b in "$vst3" "$clap" "$app"; do
+            rl_adhoc_sign "$b"
+          done
+
+          stage="$RUNNER_TEMP/stage-mac"
+          rm -rf "$stage"; mkdir -p "$stage"
+          cp -R "$vst3" "$clap" "$app" "$stage/"
+          cp README.md LICENSE "$stage/"
+          rl_dmg "${{ matrix.name }}" "$stage"
+          rl_pkg_multi "${{ matrix.name }}" \
+            "$vst3:/Library/Audio/Plug-Ins/VST3" \
+            "$clap:/Library/Audio/Plug-Ins/CLAP" \
+            "$app:/Applications"
+
+      - name: Package .deb/.rpm (Linux, best-effort)
+        if: startsWith(matrix.os, 'ubuntu')
+        shell: bash
+        env:
+          PKGARCH: ${{ matrix.pkgarch }}
+          VERSION: ${{ steps.ver.outputs.version }}
+        continue-on-error: true
+        run: |
+          go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.41.1
+          export PATH="$(go env GOPATH)/bin:$PATH"
+          cat > nfpm.yaml <<EOF
+          name: voicelevel
+          arch: ${PKGARCH}
+          version: "${VERSION}"
+          maintainer: Allan Sargeant <allan.sargeant@gmail.com>
+          description: Attenuation-only automatic microphone leveler (VST3 + CLAP)
+          license: GPL-3.0-or-later
+          contents:
+            - src: out/VST3/VoiceLevel.vst3
+              dst: /usr/lib/vst3/VoiceLevel.vst3
+              type: tree
+            - src: out/CLAP/VoiceLevel.clap
+              dst: /usr/lib/clap/VoiceLevel.clap
+          EOF
+          nfpm package -f nfpm.yaml -p deb
+          nfpm package -f nfpm.yaml -p rpm
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: voicelevel-${{ matrix.name }}
+          path: |
+            *.zip
+            *.deb
+            *.rpm
+            *.dmg
+            *.pkg
+          if-no-files-found: error
+
+  windows-installers:
+    name: Windows installers
+    needs: build
+    runs-on: ubuntu-latest
+    # makensis cross-compiles, so both architectures are produced here from the
+    # zips the Windows jobs uploaded. Building them on the Windows runners is
+    # not an option for arm64: that image cannot execute the 32-bit makensis.
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+
+      - name: Install NSIS
+        run: sudo apt-get update && sudo apt-get install -y nsis
+
+      - name: Build installers
+        shell: bash
+        run: |
+          source scripts/release-lib.sh
+          version="${GITHUB_REF_NAME#v}"
+          # A branch dispatch has no numeric tag to strip; fall back to the
+          # crate's own version rather than naming a file after the branch.
+          [[ "$version" =~ ^[0-9] ]] || version="$(sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml | head -1)"
+          rl_init "VoiceLevel" voicelevel "$version" com.stoatworks.voicelevel "$PWD/installers"
+          for arch in x86_64 aarch64; do
+            zip="$(find artifacts -name "voicelevel-windows-${arch}.zip" | head -1)"
+            if [ -z "$zip" ]; then
+              echo "no build artefact for windows-${arch}, skipping"
+              continue
+            fi
+            stage="$RUNNER_TEMP/stage-${arch}"
+            rm -rf "$stage"; mkdir -p "$stage"
+            unzip -q "$zip" -d "$stage"
+            # A plugin installer has no shortcut to create, so --plain keeps it
+            # to files plus an Add/Remove Programs entry.
+            rl_nsis "windows-${arch}" "$stage" --plain
+          done
+          ls -l installers
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: voicelevel-windows-installers
+          path: installers/*
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: [build, windows-installers]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: artifacts/**/*
+          generate_release_notes: true
