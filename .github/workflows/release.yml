@@ -119,16 +119,6 @@ jobs:
           fi
           ls -R out | head -40
 
-      - name: Archive (zip)
-        shell: bash
-        run: |
-          cd out
-          if command -v 7z >/dev/null 2>&1; then
-            7z a "../voicelevel-${{ matrix.name }}.zip" ./*
-          else
-            zip -r "../voicelevel-${{ matrix.name }}.zip" ./*
-          fi
-
       - name: Installers (macOS)
         if: runner.os == 'macOS'
         shell: bash
@@ -178,6 +168,20 @@ jobs:
             "$vst3:/Library/Audio/Plug-Ins/VST3" \
             "$clap:/Library/Audio/Plug-Ins/CLAP" \
             "$app:/Applications"
+
+      - name: Archive (zip)
+        shell: bash
+        # After the macOS step, not before it: that step re-signs the bundles
+        # (ad-hoc, over the patched plists), and a zip cut earlier would carry
+        # xtask's signature sealed over the plist as it was — which v0.1.0 did,
+        # and codesign reported "invalid Info.plist" on the app inside it.
+        run: |
+          cd out
+          if command -v 7z >/dev/null 2>&1; then
+            7z a "../voicelevel-${{ matrix.name }}.zip" ./*
+          else
+            zip -r "../voicelevel-${{ matrix.name }}.zip" ./*
+          fi
 
       - name: Package .deb/.rpm (Linux, best-effort)
         if: startsWith(matrix.os, 'ubuntu')
