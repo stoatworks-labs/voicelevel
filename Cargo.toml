@@ -20,7 +20,7 @@ nih_plug_egui = { git = "https://github.com/robbert-vdh/nih-plug.git" }
 # fleet's sync-about) names `egui` and `image` directly, so both are direct
 # dependencies: `egui` at the version nih_plug_egui already resolves, `image`
 # only to decode the mark.
-egui = "0.31"
+egui = "0.36"
 image = { version = "0.25", default-features = false, features = ["png"] }
 atomic_float = "1"
 
