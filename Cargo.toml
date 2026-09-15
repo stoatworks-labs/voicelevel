@@ -1,0 +1,28 @@
+[package]
+name = "voicelevel"
+version = "0.1.0"
+edition = "2021"
+authors = ["Allan Sargeant"]
+license = "GPL-3.0-or-later"
+description = "Attenuation-only automatic microphone leveler: a virtual fader that only ever turns a hot mic down"
+repository = "https://github.com/stoatworks-labs/voicelevel"
+
+[workspace]
+members = ["xtask"]
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", features = ["assert_process_allocs", "standalone"] }
+nih_plug_egui = { git = "https://github.com/robbert-vdh/nih-plug.git" }
+atomic_float = "1"
+
+[profile.release]
+lto = "thin"
+strip = "symbols"
+
+[profile.profiling]
+inherits = "release"
+debug = true
+strip = "none"
