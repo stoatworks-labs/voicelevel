@@ -26,3 +26,12 @@ updates:
       cargo-minor-and-patch:
         patterns: ["*"]
         update-types: ["minor", "patch"]
+    # The one exception to "no ignore rules": `egui` is a direct dependency
+    # only so the vendored About window can name it, and it has to be the
+    # version nih_plug_egui resolves through egui-baseview. Bumping it here
+    # alone (Dependabot's first PR, 0.31 -> 0.36) puts two eguis in the build
+    # and the About window compiles against the wrong one. It moves when the
+    # nih-plug git dependency moves, by hand. Patch releases still come through.
+    ignore:
+      - dependency-name: "egui"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
