@@ -80,6 +80,8 @@ Think of it as a virtual fader with an operator's hand on it:
 - **Learn** listens to the talker for five seconds of speech and parks the fader at the
   attenuation that puts them on target, for the rest of the show.
 
+**Video:** [What it does, in 56 seconds](https://www.youtube.com/watch?v=359INAq9gWU) — the real standalone on synthesised speech: a hot talker pulled down, a pause held, a quiet talker eased back up.
+
 **User guide:** [docs/USER-GUIDE.md](docs/USER-GUIDE.md).
 
 ## Controls
