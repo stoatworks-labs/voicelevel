@@ -17,10 +17,10 @@ pub const NAME: &str = "VoiceLevel";
 pub const SLUG: &str = "voicelevel";
 pub const HOOK: &str = "A fader that only ever turns the mic down";
 pub const LICENCE: &str = "GPL-3.0";
-pub const GUIDE: &str = "https://stoatworks-labs.com/guides/voicelevel/";
+pub const GUIDE: &str = "https://stoatworks-labs.com/software/voicelevel/guide/";
 pub const PAGE: &str = "https://stoatworks-labs.com/software/voicelevel/";
 pub const REPO: &str = "https://github.com/stoatworks-labs/voicelevel";
-pub const VERSION_FALLBACK: &str = "0.1.0";
+pub const VERSION_FALLBACK: &str = "v0.1.0";
 
 pub const ORG: &str = "Stoatworks Labs";
 pub const HOME: &str = "https://stoatworks-labs.com";
@@ -28,10 +28,7 @@ pub const TAGLINE: &str = "Open tools for the people who run the show.";
 
 /// The canonical funding links, matching FUNDING.yml and the support footer.
 pub const FUNDING: [(&str, &str); 4] = [
-    (
-        "GitHub Sponsors",
-        "https://github.com/sponsors/stoatworks-labs",
-    ),
+    ("GitHub Sponsors", "https://github.com/sponsors/stoatworks-labs"),
     ("Ko-fi", "https://ko-fi.com/stoatworkslabs"),
     ("Patreon", "https://patreon.com/StoatworksLabs"),
     ("Liberapay", "https://liberapay.com/stoatworks-labs"),

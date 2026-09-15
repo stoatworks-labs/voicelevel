@@ -143,6 +143,9 @@ watched happening.
   on nih-plug's own example plugin — an upstream framework issue, not this plugin's.
 
 <!-- attributions:start -->
+This project is built on other people's work — see [ATTRIBUTIONS.md](ATTRIBUTIONS.md).
+
+**Licensing:** this repo is GPL-3.0-or-later throughout — nih-plug's VST3 bindings are GPLv3, so the released binaries are GPL works and the source is licensed to match — see [ATTRIBUTIONS.md](ATTRIBUTIONS.md) before redistributing them.
 <!-- attributions:end -->
 
 ## Licence

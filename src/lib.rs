@@ -10,8 +10,11 @@ mod editor;
 
 // The Stoatworks About window and its facts, vendored by the fleet's
 // sync-about: edit the masters in stoatworks-backend, never these copies.
+// Both are vendored verbatim, so rustfmt is kept off them and the master's one
+// clippy nit is silenced here rather than fixed here.
+#[rustfmt::skip]
 mod about_data;
-// Vendored verbatim, so its one clippy nit is silenced here rather than fixed here.
+#[rustfmt::skip]
 #[allow(clippy::redundant_closure)]
 mod about_window;
 

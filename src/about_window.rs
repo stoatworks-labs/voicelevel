@@ -136,9 +136,11 @@ fn draw_mark(ui: &mut egui::Ui, rect: egui::Rect) {
                 // window over.
                 None => return,
             };
-            let handle =
-                ui.ctx()
-                    .load_texture("stoatworks-about-mark", image, egui::TextureOptions::LINEAR);
+            let handle = ui.ctx().load_texture(
+                "stoatworks-about-mark",
+                image,
+                egui::TextureOptions::LINEAR,
+            );
             ui.ctx().memory_mut(|memory| {
                 memory
                     .data

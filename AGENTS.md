@@ -87,6 +87,11 @@ and is not a mistake; `ATTRIBUTIONS.md` (generated) says so.
   (`universal-apple-darwin` is a bundling target, not a rustup one). CI's macOS job asserts
   every Mach-O in the output is fat and counts them — a `find` that matched nothing must
   fail, not pass.
+- `cargo xtask bundle` run from a worktree nested under the shared checkout
+  (`.claude/worktrees/<name>`) builds and bundles the **shared checkout**, not the worktree:
+  nih_plug_xtask takes the topmost ancestor holding a `Cargo.toml` as the workspace root, and
+  writes to that checkout's `target/bundled/`. Plain `cargo build`/`cargo test` in the
+  worktree are fine; only bundle from a checkout with no `Cargo.toml` above it.
 - The standalone's `-l` flag takes the layout **index** (1 = Mono, 2 = Stereo), not a name,
   and the CoreAudio backend refuses a device whose channel count differs from the layout.
 - `clap-validator` fails four tests on **every** nih-plug plugin (nih-plug commit de42101):
