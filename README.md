@@ -28,7 +28,7 @@ the input meter is the talker's level with the pauses left out — what the fade
 
 | Build | Download | Size |
 | --- | --- | --- |
-| Universal (Apple Silicon + Intel) · .dmg disk image | [`voicelevel-0.1.0-macos-universal.dmg`](https://github.com/stoatworks-labs/voicelevel/releases/download/v0.1.0/voicelevel-0.1.0-macos-universal.dmg) | 14 MB |
+| Universal (Apple Silicon + Intel) · .dmg disk image | [`voicelevel-0.1.0-macos-universal.dmg`](https://github.com/stoatworks-labs/voicelevel/releases/download/v0.1.0/voicelevel-0.1.0-macos-universal.dmg) | 13 MB |
 | Universal (Apple Silicon + Intel) · .pkg installer | [`voicelevel-0.1.0-macos-universal.pkg`](https://github.com/stoatworks-labs/voicelevel/releases/download/v0.1.0/voicelevel-0.1.0-macos-universal.pkg) | 13 MB |
 | Universal (Apple Silicon + Intel) · .zip archive | [`voicelevel-macos-universal.zip`](https://github.com/stoatworks-labs/voicelevel/releases/latest/download/voicelevel-macos-universal.zip) | 13 MB |
 
@@ -62,7 +62,7 @@ the input meter is the talker's level with the pauses left out — what the fade
 
 All builds, checksums and release notes: [github.com/stoatworks-labs/voicelevel/releases](https://github.com/stoatworks-labs/voicelevel/releases).
 
-The Windows builds are unsigned, so SmartScreen warns once — see [Windows SmartScreen](#windows-smartscreen) for the one-time click-through.
+macOS builds are signed and notarised and open normally. The Windows builds are unsigned, so SmartScreen warns once — see [Windows SmartScreen](#windows-smartscreen) for the one-time click-through.
 
 <!-- downloads:end -->
 
