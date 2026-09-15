@@ -97,6 +97,26 @@ jobs:
             *)       cp "$b/VoiceLevel" out/Standalone/ ;;
           esac
           cp README.md LICENSE out/
+          if [ "${{ runner.os }}" = macOS ]; then
+            # nih_plug_xtask writes 1.0.0 into every Info.plist regardless of
+            # the crate version, and a bundle whose plist disagrees with its
+            # tag is how the fleet's version drift starts. The standalone also
+            # needs a microphone usage description: macOS kills a process that
+            # opens an input device without one, and the fleet's post-hoc
+            # signer reads the key to know the app needs the audio-input
+            # entitlement under the hardened runtime.
+            v="${{ steps.ver.outputs.version }}"
+            for plist in out/VST3/VoiceLevel.vst3/Contents/Info.plist \
+                         out/CLAP/VoiceLevel.clap/Contents/Info.plist \
+                         out/Standalone/VoiceLevel.app/Contents/Info.plist; do
+              /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $v" "$plist"
+              /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $v" "$plist"
+            done
+            /usr/libexec/PlistBuddy -c "Add :NSMicrophoneUsageDescription string \
+              'VoiceLevel levels the microphone you point it at. Audio is processed on this machine and is never recorded, saved or sent anywhere.'" \
+              out/Standalone/VoiceLevel.app/Contents/Info.plist
+            plutil -lint out/Standalone/VoiceLevel.app/Contents/Info.plist
+          fi
           ls -R out | head -40
 
       - name: Archive (zip)
