@@ -62,7 +62,7 @@ it keeps happening.
 
 ## Linux
 
-No signing gate. Make the binary executable if you took the tarball:
+No signing gate. Make the binary executable if you took the `.zip`:
 
 ```sh
 chmod +x ./Standalone/VoiceLevel
