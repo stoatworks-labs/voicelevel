@@ -35,7 +35,7 @@ jobs:
           # loads whichever slice matches its own process, so a universal
           # bundle is the only shape that works in both Intel and Apple
           # Silicon DAWs without the user having to pick.
-          - { name: macos-universal, os: macos-14 }
+          - { name: macos-universal, os: macos-15 }
     steps:
       - uses: actions/checkout@v7
 
