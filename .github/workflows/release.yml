@@ -257,9 +257,10 @@ jobs:
             stage="$RUNNER_TEMP/stage-${arch}"
             rm -rf "$stage"; mkdir -p "$stage"
             unzip -q "$zip" -d "$stage"
-            # A plugin installer has no shortcut to create, so --plain keeps it
-            # to files plus an Add/Remove Programs entry.
-            rl_nsis "windows-${arch}" "$stage" --plain
+            # --vst3 puts the VST3 and the CLAP in Common Files\VST3 and
+            # Common Files\CLAP, where hosts scan, and the standalone in
+            # Program Files.
+            rl_nsis "windows-${arch}" "$stage" --vst3
           done
           ls -l installers
 

@@ -59,11 +59,13 @@ or build it from source with `cargo xtask bundle voicelevel --release`.
   each. The `.dmg` carries the same three bundles for anyone who'd rather drag them into
   `~/Library/Audio/Plug-Ins/`. The builds are Developer ID-signed and notarised, so there's
   no quarantine step.
-- **Windows**: the installer puts everything under `C:\Program Files\VoiceLevel\`. Point your
-  host at `VST3\VoiceLevel.vst3` (or copy it into `C:\Program Files\Common Files\VST3\`) and
-  `CLAP\VoiceLevel.clap` into `C:\Program Files\Common Files\CLAP\`. The `.zip` is the same
-  files without the installer. The Windows builds are unsigned; see
-  [UNSIGNED.md](UNSIGNED.md) for the one-time SmartScreen click-through.
+- **Windows**: the installer puts the VST3 in `C:\Program Files\Common Files\VST3\` and the
+  CLAP in `C:\Program Files\Common Files\CLAP\`, where hosts look for them, and the standalone
+  in `C:\Program Files\VoiceLevel\`. The v0.1.0 installer put all of it under
+  `C:\Program Files\VoiceLevel\`, where no host looks: copy `VST3\VoiceLevel.vst3` and
+  `CLAP\VoiceLevel.clap` across by hand, or run a newer installer, which clears those copies
+  away. The `.zip` is the same files without the installer. The Windows builds are unsigned;
+  see [UNSIGNED.md](UNSIGNED.md) for the one-time SmartScreen click-through.
 - **Linux**: the `.deb` and `.rpm` install the VST3 to `/usr/lib/vst3/` and the CLAP to
   `/usr/lib/clap/`. The `.zip` holds the bundles and the standalone binary.
 
