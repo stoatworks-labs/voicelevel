@@ -100,6 +100,11 @@ and is not a mistake; `ATTRIBUTIONS.md` (generated) says so.
   upstream; do not chase them here.
 - Windows on Arm is `continue-on-error` in the matrix because nih-plug's own CI never builds
   it; a failure there must not hold the release.
+- nih_plug_xtask puts the Windows ARM64 VST3's DLL in `Contents\arm_64-win`, which the VST3
+  SDK's host loader never opens (it looks in `arm64-win`). release.yml renames it in
+  "Collect plugin bundles" and fails if the DLL isn't where a host looks, so a local
+  `cargo xtask bundle` for `aarch64-pc-windows-msvc` still gives the broken name. Drop the
+  rename once nih-plug writes `arm64-win` itself (`vst3_bundle_library_name`).
 - The About window's facts (`about_data.rs`) come from the website's `projects.json` via
   sync-about. A changed hook or guide URL is edited THERE, then synced.
 - Egui's `-0.0` formatting: `format!("{:.1}", -0.0_f32)` prints `-0.0`, which is why

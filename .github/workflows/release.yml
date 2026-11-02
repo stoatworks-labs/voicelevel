@@ -117,6 +117,25 @@ jobs:
               out/Standalone/VoiceLevel.app/Contents/Info.plist
             plutil -lint out/Standalone/VoiceLevel.app/Contents/Info.plist
           fi
+          if [ "${{ runner.os }}" = Windows ]; then
+            # nih_plug_xtask puts the ARM64 DLL in Contents\arm_64-win, a folder
+            # no host opens: the VST3 SDK's loader (module_win32.cpp) looks in
+            # arm64-win, the name Steinberg's bundle format gives and the JUCE
+            # plugins ship. nih-plug master (the commit Cargo.lock pins) still
+            # writes arm_64-win. x86_64-win is already right. Assert the folder
+            # rather than trust the rename, as the macOS step does the slices.
+            c=out/VST3/VoiceLevel.vst3/Contents
+            if [ -d "$c/arm_64-win" ]; then mv "$c/arm_64-win" "$c/arm64-win"; fi
+            case "${{ matrix.name }}" in
+              windows-aarch64) arch=arm64-win ;;
+              *)               arch=x86_64-win ;;
+            esac
+            [ -f "$c/$arch/VoiceLevel.vst3" ] && [ ! -e "$c/arm_64-win" ] || {
+              echo "expected the DLL at $c/$arch/VoiceLevel.vst3, got:" >&2
+              ls -R "$c" >&2
+              exit 1
+            }
+          fi
           ls -R out | head -40
 
       - name: Installers (macOS)
