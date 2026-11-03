@@ -12,6 +12,8 @@ VoiceLevel is an automatic microphone leveller for live sound that only ever tur
 down. It comes as VST3, CLAP and a standalone app, built on
 [nih-plug](https://github.com/robbert-vdh/nih-plug).
 
+The [project page](https://stoatworks-labs.com/software/voicelevel/) has the downloads, the [user guide](https://stoatworks-labs.com/software/voicelevel/guide/) and the video.
+
 ![The VoiceLevel window: input and output meters on the left with the target drawn across them, the virtual fader in the middle pulled down to −6.4 dB, and the six controls on the right with the mode buttons above them](docs/screenshots/plugin.png)
 
 *An actual screenshot of the standalone build levelling synthesised speech. The talker
